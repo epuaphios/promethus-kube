@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: prometheus
+  template:
+    metadata:
+      labels:
+        name: prometheus
+        namespace: monitoring
+    spec:
+      containers:
+      - name: prometheus
+        image: prom/prometheus:v2.18.1
+        args:
+        - --config.file=/etc/prometheus/prometheus.yml
+        - --web.listen-address=:9090
+        - --web.enable-lifecycle
+        ports:
+          - containerPort: 9090
+        volumeMounts:
+          - name: prometheus-config-volume
+            mountPath: /etc/prometheus/
+          - name: data
+            mountPath: /prometheus
+      volumes:
+        - name: prometheus-config-volume
+          configMap:
+            defaultMode: 420
+            name: prometheus-server-conf
+        - name: data
+          persistentVolumeClaim:
+            claimName: prometheus-pv-claim
+---
